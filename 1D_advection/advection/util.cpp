@@ -2,8 +2,9 @@
 
 #include <fstream>
 
-void save_history(const std::vector<std::vector<double>>& history) {
-	std::ofstream file("history.txt");
+void save_history(const std::string_view& filename,
+				  const std::vector<std::vector<double>>& history) {
+	std::ofstream file(filename);
 
 	size_t T = history.size();
 	size_t N = history[0].size();

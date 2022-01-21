@@ -4,6 +4,9 @@
 #include "advection/util.h"
 
 #include <math.h>
+#include <string_view>
+
+constexpr std::string_view kHistoryFilename = "data/history.txt";
 
 int main() {
 	size_t N = 200;
@@ -16,9 +19,9 @@ int main() {
 
 	for (size_t i = 0; i < N; i++) {
 		x[i] = i * h;
-		u[i] = sin(2*M_PI*x[i]);
+		u[i] = sin(2*M_PI*x[i]) + 1;
 	}
 
 	auto history = cent_diff(T, sigma, u);
-	save_history(history);
+	save_history(kHistoryFilename, history);
 }
