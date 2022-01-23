@@ -22,6 +22,8 @@ class Cell {
 		return data_.size();
 	}
 
+	void AssignSum(double coef1, const Cell& cell1, double coef2, const Cell& cell2);
+
   private:
 	std::vector<double> data_;
 };

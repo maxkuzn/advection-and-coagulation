@@ -1,29 +1,12 @@
 #include "forward_difference.h"
 
 
-std::vector<std::vector<double>> forw_diff(
-		const size_t T,
-		const double sigma,
-		const std::vector<double>& u
-) {
-	size_t size = u.size();
-	std::vector<std::vector<double>> history(
-			T + 1,
-			std::vector<double>(size)
-	);
+void forw_diff(const Field1D& field_in, Field1D& field_out, const double sigma) {
+	size_t size = field_in.Size();
 
-	history[0] = u;
-
-	for (size_t t = 0; t < T; t++) {
-		std::vector<double>& u_prev = history[t];
-		std::vector<double>& u_next = history[t + 1];
-
-		u_next.back() = (1 + sigma) * u_prev.back() - sigma * u_prev[0];
-		for (size_t x = 0; x < size - 1; x++) {
-			u_next[x] = (1 + sigma) * u_prev[x] - sigma * u_prev[x + 1];
-		}
+	field_out[size - 1].AssignSum(1+sigma, field_in[size - 1], -sigma, field_out[0]);
+	for (size_t x = 0; x < size - 1; x++) {
+		field_out[x].AssignSum(1+sigma, field_in[x], -sigma, field_in[x + 1]);
 	}
-
-	return history;
 }
 

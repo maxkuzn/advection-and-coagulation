@@ -25,8 +25,8 @@ Field1D init_field_1d(size_t field_size, size_t particle_sizes_num) {
 
 	Field1D field(field_size, particle_sizes_num);
 
-	// Fill only first 10% of the field with factor func
-	size_t limit = field_size / 10;
+	// Fill only first 25% of the field with factor func
+	size_t limit = field_size / 4;
 	for (size_t x = 0; x < field_size; x++) {
 		double factor = coord_factor(x, limit);
 
