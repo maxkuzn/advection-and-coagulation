@@ -5,6 +5,6 @@ class BaseKernel {
 	BaseKernel() = default;
 	virtual ~BaseKernel() = default;
 
-	double Compute(double x, double y) const = 0;
+	virtual double Compute(double x, double y) const = 0;
 };
 

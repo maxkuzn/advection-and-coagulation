@@ -23,6 +23,7 @@ class Cell {
 	}
 
 	void AssignSum(double coef1, const Cell& cell1, double coef2, const Cell& cell2);
+	void AssignSum(double coef1, const Cell& cell1, double coef2, const Cell& cell2, double coef3, const Cell& cell3);
 
   private:
 	std::vector<double> data_;

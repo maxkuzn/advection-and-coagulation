@@ -1,9 +1,6 @@
 #pragma once
 
-#include <vector>
+#include "base/field_1d.h"
 
-std::vector<std::vector<double>> cent_diff(
-		const size_t T,
-		const double sigma,
-		const std::vector<double>& u);
+void cent_diff(const Field1D& field_in, Field1D& field_out, const double sigma);
 
