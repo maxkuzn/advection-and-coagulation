@@ -1,6 +1,10 @@
 build
 data
+bin
 .ipynb_checkpoints
+
+# IDEA
+.idea
 
 # Prerequisites
 *.d
@@ -21,7 +25,6 @@ data
 *.dll
 
 # Fortran module files
-*.mod
 *.smod
 
 # Compiled Static libraries
