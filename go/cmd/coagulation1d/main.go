@@ -1,9 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/pkg/profile"
 	"github.com/schollz/progressbar/v3"
 
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/advector1d"
@@ -18,22 +21,35 @@ const (
 	historyFilename = "data/history.txt"
 )
 
+var (
+	profilers             = []string{"cpu", "mem", "goroutine"}
+	profileNameToProfiler = map[string]func(*profile.Profile){
+		"cpu":       profile.CPUProfile,
+		"mem":       profile.MemProfile,
+		"goroutine": profile.MemProfile,
+	}
+
+	profileFlag = flag.String("profile", "", fmt.Sprintf("which profiler to use\npossible values: %v", profilers))
+)
+
 func main() {
+	flag.Parse()
+
 	conf, err := config.Read(configFilename)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	saveFile, err := os.Create(historyFilename)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	saver := field1d.NewSaver(saveFile)
 	defer func() {
 		err := saver.Flush()
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -42,13 +58,19 @@ func main() {
 
 	advector, err := newAdvector(conf)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	coagulator, err := newCoagulator(conf)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+
+	stop, err := profiler()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stop()
 
 	run(conf, field, buff, saver, advector, coagulator)
 }
@@ -58,18 +80,18 @@ func run(
 	field, buff field1d.Field,
 	saver *field1d.Saver,
 	advector advector1d.Advector,
-	coagulator *coagulator1d.Coagulator,
+	coagulator coagulator1d.Coagulator,
 ) {
 	err := saver.Save(field)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	bar := newBar(conf.TimeSteps)
 	defer func() {
 		err := bar.Finish()
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -79,12 +101,12 @@ func run(
 
 		err = saver.Save(field)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		err = bar.Add(1)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 }
@@ -98,7 +120,7 @@ func newAdvector(conf *config.Config) (advector1d.Advector, error) {
 	}
 }
 
-func newCoagulator(conf *config.Config) (*coagulator1d.Coagulator, error) {
+func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
 	var kernel coagulator1d.Kernel
 	switch conf.CoagulationKernelName {
 	case "Identity":
@@ -107,7 +129,30 @@ func newCoagulator(conf *config.Config) (*coagulator1d.Coagulator, error) {
 		return nil, fmt.Errorf("unknown coagulation kernel name %q", conf.CoagulationKernelName)
 	}
 
-	return coagulator1d.New(kernel, conf.TimeStep), nil
+	switch conf.CoagulatorName {
+	case "Sequential":
+		return coagulator1d.NewSequential(kernel, conf.TimeStep), nil
+	case "Parallel":
+		return coagulator1d.NewParallel(kernel, conf.TimeStep), nil
+	default:
+		return nil, fmt.Errorf("unknown coagulator name %q", conf.CoagulatorName)
+	}
+}
+
+func profiler() (stop func(), err error) {
+	if profileFlag == nil || *profileFlag == "" {
+		return func() {}, nil
+	}
+
+	f, ok := profileNameToProfiler[*profileFlag]
+	if !ok {
+		return func() {}, fmt.Errorf("unknown profiler name: %v", *profileFlag)
+	}
+
+	s := profile.Start(f, profile.ProfilePath("."))
+	return func() {
+		s.Stop()
+	}, nil
 }
 
 func newBar(total int) *progressbar.ProgressBar {

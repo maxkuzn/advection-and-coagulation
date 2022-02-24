@@ -1,12 +1,13 @@
 {
-  "field_cells_size": 10,
-  "particles_sizes_num": 10,
+  "field_cells_size": 200,
+  "particles_sizes_num": 200,
 
   "total_time": 10.0,
-  "time_steps": 50,
+  "time_steps": 1000,
 
   "advection_coef": 0.1,
 
   "advector": "CentralDifference",
+  "coagulator": "Parallel",
   "coagulation_kernel": "Identity"
 }

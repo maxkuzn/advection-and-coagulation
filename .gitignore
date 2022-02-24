@@ -6,6 +6,9 @@ bin
 # IDEA
 .idea
 
+# Go
+*.pprof
+
 # Prerequisites
 *.d
 
