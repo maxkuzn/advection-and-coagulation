@@ -6,6 +6,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/naiveparallel"
+
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/sequential"
+
 	"github.com/pkg/profile"
 	"github.com/schollz/progressbar/v3"
 
@@ -53,8 +57,7 @@ func main() {
 		}
 	}()
 
-	field := field1d.New(conf.FieldCellsSize, conf.ParticlesSizesNum)
-	buff := field1d.New(conf.FieldCellsSize, conf.ParticlesSizesNum)
+	field, buff := initFields(conf)
 
 	advector, err := newAdvector(conf)
 	if err != nil {
@@ -65,6 +68,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if err := coagulator.Start(); err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := coagulator.Stop(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	stop, err := profiler()
 	if err != nil {
@@ -111,6 +123,13 @@ func run(
 	}
 }
 
+func initFields(conf *config.Config) (field1d.Field, field1d.Field) {
+	field := field1d.Init(conf.FieldCellsSize, conf.ParticlesSizesNum, conf.MinParticleSize, conf.MaxParticleSize)
+	buff := field1d.New(conf.FieldCellsSize, conf.ParticlesSizesNum, conf.MinParticleSize, conf.MaxParticleSize)
+
+	return field, buff
+}
+
 func newAdvector(conf *config.Config) (advector1d.Advector, error) {
 	switch conf.AdvectorName {
 	case "CentralDifference":
@@ -131,9 +150,9 @@ func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
 
 	switch conf.CoagulatorName {
 	case "Sequential":
-		return coagulator1d.NewSequential(kernel, conf.TimeStep), nil
-	case "Parallel":
-		return coagulator1d.NewParallel(kernel, conf.TimeStep), nil
+		return sequential.NewSequential(kernel, conf.TimeStep), nil
+	case "NaiveParallel":
+		return naiveparallel.NewParallel(kernel, conf.TimeStep), nil
 	default:
 		return nil, fmt.Errorf("unknown coagulator name %q", conf.CoagulatorName)
 	}

@@ -7,8 +7,10 @@ import (
 )
 
 type Config struct {
-	FieldCellsSize    int `json:"field_cells_size"`
-	ParticlesSizesNum int `json:"particles_sizes_num"`
+	FieldCellsSize    int     `json:"field_cells_size"`
+	ParticlesSizesNum int     `json:"particles_sizes_num"`
+	MinParticleSize   float64 `json:"min_particle_size"`
+	MaxParticleSize   float64 `json:"max_particle_size"`
 
 	TotalTime float64 `json:"total_time"`
 	TimeSteps int     `json:"time_steps"`
@@ -28,6 +30,14 @@ func (c *Config) validateAndFill() error {
 
 	if c.ParticlesSizesNum <= 0 {
 		return errors.New("particles sizes num should be specified as positive")
+	}
+
+	if c.MinParticleSize <= 0 {
+		return errors.New("min particle size should be specified as positive")
+	}
+
+	if c.MaxParticleSize <= 0 {
+		return errors.New("max particle size should be specified as positive")
 	}
 
 	if c.TotalTime <= 0 {

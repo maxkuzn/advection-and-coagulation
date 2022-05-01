@@ -19,25 +19,34 @@ func (a *centralDifference) Process(field, buff field1d.Field) (field1d.Field, f
 	fieldIn := field
 	fieldOut := buff
 
-	l := len(field)
+	l := field.Len()
 
-	fieldOut[0] = cell.Sum3(
-		1, fieldIn[0],
-		-a.sigma/2, fieldIn[1],
-		a.sigma/2, fieldIn[l-1],
+	fieldOut.SetCell(
+		0,
+		cell.Sum3(
+			1, fieldIn.Cell(0),
+			-a.sigma/2, fieldIn.Cell(1),
+			a.sigma/2, fieldIn.Cell(l-1),
+		),
 	)
 
-	fieldOut[l-1] = cell.Sum3(
-		1, fieldIn[l-1],
-		-a.sigma/2, fieldIn[0],
-		a.sigma/2, fieldIn[l-2],
+	fieldOut.SetCell(
+		l-1,
+		cell.Sum3(
+			1, fieldIn.Cell(l-1),
+			-a.sigma/2, fieldIn.Cell(0),
+			a.sigma/2, fieldIn.Cell(l-2),
+		),
 	)
 
 	for x := 1; x < l-1; x++ {
-		fieldOut[x] = cell.Sum3(
-			1, fieldIn[x],
-			-a.sigma/2, fieldIn[x+1],
-			a.sigma/2, fieldIn[x-1],
+		fieldOut.SetCell(
+			x,
+			cell.Sum3(
+				1, fieldIn.Cell(x),
+				-a.sigma/2, fieldIn.Cell(x+1),
+				a.sigma/2, fieldIn.Cell(x-1),
+			),
 		)
 	}
 

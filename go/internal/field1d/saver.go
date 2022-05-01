@@ -19,7 +19,7 @@ func NewSaver(w io.Writer) *Saver {
 }
 
 func (s *Saver) saveHeader(f Field) error {
-	_, err := fmt.Fprintf(s.w, "%d\n", len(f))
+	_, err := fmt.Fprintf(s.w, "%d\n", f.Len())
 	return err
 }
 
@@ -33,10 +33,11 @@ func (s *Saver) Save(f Field) error {
 		s.firstSave = false
 	}
 
-	for _, c := range f {
-		for i, currentSize := range c {
+	for i := 0; i < f.Len(); i++ {
+		c := f.Cell(i)
+		for j, currentSize := range c {
 			format := "%v "
-			if i+1 == len(c) {
+			if j+1 == len(c) {
 				format = "%v\n"
 			}
 

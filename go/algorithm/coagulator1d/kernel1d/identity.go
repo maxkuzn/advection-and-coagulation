@@ -13,7 +13,7 @@ func NewIdentity() *identity {
 	return &identity{}
 }
 
-func (k *identity) Compute(x, y int) cell.FloatType {
+func (k *identity) Compute(x, y float64) cell.FloatType {
 	_ = x // unused
 	_ = y // unused
 	return 1
