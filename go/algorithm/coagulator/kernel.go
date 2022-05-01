@@ -1,4 +1,4 @@
-package coagulator1d
+package coagulator
 
 import "github.com/maxkuzn/advection-and-coagulation/internal/cell"
 

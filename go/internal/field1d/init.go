@@ -6,13 +6,19 @@ import (
 	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
 )
 
-func gaussianPDF(x float64) float64 {
-	const sigma_2 = 0.3
-	const mu = 0.0
+func gaussianPDF(mu, x float64) float64 {
+	const sigma_2 = 0.02
 
 	return 1.0 / math.Sqrt(2*sigma_2*math.Pi) * math.Exp(
-		-1/2*(x-mu)*(x-mu)/sigma_2,
+		-1.0/2*(x-mu)*(x-mu)/sigma_2,
 	)
+}
+
+func sizeFactor(vMin, v float64) float64 {
+	minF := gaussianPDF(vMin, vMin)
+	f := gaussianPDF(vMin, v)
+
+	return f / minF
 }
 
 func coordFactor(x, limit int) float64 {
@@ -34,7 +40,7 @@ func Init(fieldSize, particlesSizesNum int, vMin, vMax float64) Field {
 
 		for i := 0; i < particlesSizesNum; i++ {
 			v := field.sizes[i]
-			field.cells[x][i] = cell.FloatType(factor * gaussianPDF(v))
+			field.cells[x][i] = cell.FloatType(factor * sizeFactor(vMin, v))
 		}
 	}
 

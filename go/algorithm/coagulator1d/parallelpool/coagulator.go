@@ -4,15 +4,15 @@ import (
 	"context"
 	"sync"
 
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d"
-	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
+	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
+
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator"
 )
 
 const numWorkers = 8
 
-type parallelPoolCoagulator struct {
-	kernel   coagulator1d.Kernel
-	timeStep cell.FloatType
+type coag struct {
+	base *coagulator.Coagulator
 
 	work chan func()
 	done chan struct{}
@@ -21,16 +21,16 @@ type parallelPoolCoagulator struct {
 	cancel func()
 }
 
-func New(kernel coagulator1d.Kernel, timeStep float64) *parallelPoolCoagulator {
-	return &parallelPoolCoagulator{
-		kernel:   kernel,
-		timeStep: cell.FloatType(timeStep),
-		work:     make(chan func()),
-		done:     make(chan struct{}),
+func New(base *coagulator.Coagulator) *coag {
+	return &coag{
+		base: base,
+
+		work: make(chan func(), numWorkers),
+		done: make(chan struct{}, numWorkers),
 	}
 }
 
-func (c *parallelPoolCoagulator) Start() error {
+func (c *coag) Start() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	c.cancel = cancel
 
@@ -42,14 +42,11 @@ func (c *parallelPoolCoagulator) Start() error {
 	return nil
 }
 
-func (c *parallelPoolCoagulator) Stop() error {
-	c.cancel()
-	c.wg.Wait()
-
+func (c *coag) Stop() error {
 	return nil
 }
 
-func (c *parallelPoolCoagulator) runWorker(ctx context.Context) {
+func (c *coag) runWorker(ctx context.Context) {
 	for {
 		select {
 		case f := <-c.work:
@@ -60,4 +57,23 @@ func (c *parallelPoolCoagulator) runWorker(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func (c *coag) Process(field, buff field1d.Field) (field1d.Field, field1d.Field) {
+	var wg sync.WaitGroup
+
+	for i := 0; i < field.Len(); i++ {
+		i := i
+
+		wg.Add(1)
+		c.work <- func() {
+			defer wg.Done()
+
+			c.base.Process(field.Cell(i), buff.Cell(i), field.Sizes())
+		}
+	}
+
+	wg.Wait()
+
+	return field, buff
 }

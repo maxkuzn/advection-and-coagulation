@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	FieldSize         float64 `json:"field_size"`
 	FieldCellsSize    int     `json:"field_cells_size"`
 	ParticlesSizesNum int     `json:"particles_sizes_num"`
 	MinParticleSize   float64 `json:"min_particle_size"`
@@ -24,6 +25,10 @@ type Config struct {
 }
 
 func (c *Config) validateAndFill() error {
+	if c.FieldSize <= 0 {
+		return errors.New("field size should be specified as positive")
+	}
+
 	if c.FieldCellsSize <= 0 {
 		return errors.New("field cells size should be specified as positive")
 	}

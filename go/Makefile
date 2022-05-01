@@ -11,3 +11,5 @@ build:
 run: build
 	./bin/coagulation1d
 
+copy:
+	cp ./data/history.txt ../data/history-go.txt

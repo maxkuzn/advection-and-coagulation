@@ -1,26 +1,43 @@
 package naiveparallel
 
 import (
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d"
-	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
+	"sync"
+
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator"
+	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
 )
 
-type parallelCoagulator struct {
-	kernel   coagulator1d.Kernel
-	timeStep cell.FloatType
+type coag struct {
+	base *coagulator.Coagulator
 }
 
-func New(kernel coagulator1d.Kernel, timeStep float64) *parallelCoagulator {
-	return &parallelCoagulator{
-		kernel:   kernel,
-		timeStep: cell.FloatType(timeStep),
+func New(base *coagulator.Coagulator) *coag {
+	return &coag{base: base}
+}
+
+func (c *coag) Start() error {
+	return nil
+}
+
+func (c *coag) Stop() error {
+	return nil
+}
+
+func (c *coag) Process(field, buff field1d.Field) (field1d.Field, field1d.Field) {
+	var wg sync.WaitGroup
+
+	for i := 0; i < field.Len(); i++ {
+		i := i
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			c.base.Process(field.Cell(i), buff.Cell(i), field.Sizes())
+		}()
 	}
-}
 
-func (c *parallelCoagulator) Start() error {
-	return nil
-}
+	wg.Wait()
 
-func (c *parallelCoagulator) Stop() error {
-	return nil
+	return field, buff
 }

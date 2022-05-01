@@ -1,26 +1,30 @@
 package sequential
 
 import (
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d"
-	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator"
+	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
 )
 
-type sequentialCoagulator struct {
-	kernel   coagulator1d.Kernel
-	timeStep cell.FloatType
+type coag struct {
+	base *coagulator.Coagulator
 }
 
-func New(kernel coagulator1d.Kernel, timeStep float64) *sequentialCoagulator {
-	return &sequentialCoagulator{
-		kernel:   kernel,
-		timeStep: cell.FloatType(timeStep),
+func New(base *coagulator.Coagulator) *coag {
+	return &coag{base: base}
+}
+
+func (c *coag) Start() error {
+	return nil
+}
+
+func (c *coag) Stop() error {
+	return nil
+}
+
+func (c *coag) Process(field, buff field1d.Field) (field1d.Field, field1d.Field) {
+	for i := 0; i < field.Len(); i++ {
+		c.base.Process(field.Cell(i), buff.Cell(i), field.Sizes())
 	}
-}
 
-func (c *sequentialCoagulator) Start() error {
-	return nil
-}
-
-func (c *sequentialCoagulator) Stop() error {
-	return nil
+	return field, buff
 }
