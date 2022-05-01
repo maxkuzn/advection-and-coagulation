@@ -6,19 +6,16 @@ import (
 	"log"
 	"os"
 
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/parallelpool"
-
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/sequential"
-
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator"
-
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/naiveparallel"
-
 	"github.com/pkg/profile"
 	"github.com/schollz/progressbar/v3"
 
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/advector1d"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator/kernel"
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/naiveparallel"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/parallelpool"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/sequential"
 	"github.com/maxkuzn/advection-and-coagulation/config"
 	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
 )
@@ -143,15 +140,15 @@ func newAdvector(conf *config.Config) (advector1d.Advector, error) {
 }
 
 func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
-	var kernel coagulator.Kernel
+	var kern coagulator.Kernel
 	switch conf.CoagulationKernelName {
 	case "Identity":
-		kernel = kernel.NewIdentity()
+		kern = kernel.NewIdentity()
 	default:
 		return nil, fmt.Errorf("unknown coagulation kernel name %q", conf.CoagulationKernelName)
 	}
 
-	base := coagulator.New(kernel, conf.TimeStep)
+	base := coagulator.New(kern, conf.TimeStep)
 
 	switch conf.CoagulatorName {
 	case "Sequential":
