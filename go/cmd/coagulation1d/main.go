@@ -6,16 +6,17 @@ import (
 	"log"
 	"os"
 
+	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d"
+	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d/naiveparallel"
+	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d/parallelpool"
+	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d/sequential"
+
 	"github.com/pkg/profile"
 	"github.com/schollz/progressbar/v3"
 
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/advector1d"
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator"
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator/kernel"
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d"
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/naiveparallel"
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/parallelpool"
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator1d/sequential"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation/kernel"
 	"github.com/maxkuzn/advection-and-coagulation/config"
 	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
 )
@@ -140,15 +141,19 @@ func newAdvector(conf *config.Config) (advector1d.Advector, error) {
 }
 
 func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
-	var kern coagulator.Kernel
+	var kern coagulation.Kernel
 	switch conf.CoagulationKernelName {
 	case "Identity":
 		kern = kernel.NewIdentity()
+	case "Addition":
+		kern = kernel.NewAddition()
+	case "Multiplication":
+		kern = kernel.NewMultiplication()
 	default:
 		return nil, fmt.Errorf("unknown coagulation kernel name %q", conf.CoagulationKernelName)
 	}
 
-	base := coagulator.New(kern, conf.TimeStep)
+	base := coagulation.New(kern, conf.TimeStep)
 
 	switch conf.CoagulatorName {
 	case "Sequential":
@@ -158,7 +163,7 @@ func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
 	case "ParallelPool":
 		return parallelpool.New(base), nil
 	default:
-		return nil, fmt.Errorf("unknown coagulator name %q", conf.CoagulatorName)
+		return nil, fmt.Errorf("unknown coagulation name %q", conf.CoagulatorName)
 	}
 }
 

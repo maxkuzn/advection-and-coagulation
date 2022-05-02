@@ -1,4 +1,4 @@
-package coagulator
+package coagulation
 
 import (
 	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
@@ -51,7 +51,7 @@ func (c *Coagulator) computeL1(cel cell.Cell, sizes []float64, index int) cell.F
 	}
 
 	gridStep := (sizes[len(sizes)-1] - sizes[0]) / float64(len(sizes)-1)
-	res *= cell.FloatType(gridStep) / 2
+	res *= cell.FloatType(gridStep)
 	return res
 }
 

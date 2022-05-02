@@ -6,31 +6,29 @@ import (
 
 	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
 
-	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulator"
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation"
 )
 
-const numWorkers = 8
+const numWorkers = 15
 
-type coag struct {
-	base *coagulator.Coagulator
+type coagulator struct {
+	base *coagulation.Coagulator
 
 	work chan func()
-	done chan struct{}
 
 	wg     sync.WaitGroup
 	cancel func()
 }
 
-func New(base *coagulator.Coagulator) *coag {
-	return &coag{
+func New(base *coagulation.Coagulator) *coagulator {
+	return &coagulator{
 		base: base,
 
 		work: make(chan func(), numWorkers),
-		done: make(chan struct{}, numWorkers),
 	}
 }
 
-func (c *coag) Start() error {
+func (c *coagulator) Start() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	c.cancel = cancel
 
@@ -42,16 +40,18 @@ func (c *coag) Start() error {
 	return nil
 }
 
-func (c *coag) Stop() error {
+func (c *coagulator) Stop() error {
+	c.cancel()
+	c.wg.Wait()
+
 	return nil
 }
 
-func (c *coag) runWorker(ctx context.Context) {
+func (c *coagulator) runWorker(ctx context.Context) {
 	for {
 		select {
 		case f := <-c.work:
 			f()
-			c.done <- struct{}{}
 		case <-ctx.Done():
 			c.wg.Done()
 			return
@@ -59,7 +59,7 @@ func (c *coag) runWorker(ctx context.Context) {
 	}
 }
 
-func (c *coag) Process(field, buff field1d.Field) (field1d.Field, field1d.Field) {
+func (c *coagulator) Process(field, buff field1d.Field) (field1d.Field, field1d.Field) {
 	var wg sync.WaitGroup
 
 	for i := 0; i < field.Len(); i++ {

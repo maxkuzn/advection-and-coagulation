@@ -11,5 +11,11 @@ build:
 run: build
 	./bin/coagulation1d
 
+profcpu: build
+	./bin/coagulation1d -profile cpu
+
+profmem: build
+	./bin/coagulation1d -profile mem
+
 copy:
 	cp ./data/history.txt ../data/history-go.txt

@@ -26,7 +26,7 @@ func (a *centralDifference) Process(field, buff field1d.Field) (field1d.Field, f
 		cell.Sum3(
 			1, fieldIn.Cell(0),
 			-a.sigma/2, fieldIn.Cell(1),
-			a.sigma/2, fieldIn.Cell(l-1),
+			0, fieldIn.Cell(l-1),
 		),
 	)
 
@@ -34,7 +34,7 @@ func (a *centralDifference) Process(field, buff field1d.Field) (field1d.Field, f
 		l-1,
 		cell.Sum3(
 			1, fieldIn.Cell(l-1),
-			-a.sigma/2, fieldIn.Cell(0),
+			0, fieldIn.Cell(0),
 			a.sigma/2, fieldIn.Cell(l-2),
 		),
 	)

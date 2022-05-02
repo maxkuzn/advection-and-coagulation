@@ -20,7 +20,7 @@ type Config struct {
 	AdvectionCoef float64 `json:"advection_coef"`
 
 	AdvectorName          string `json:"advector"`
-	CoagulatorName        string `json:"coagulator"`
+	CoagulatorName        string `json:"coagulation"`
 	CoagulationKernelName string `json:"coagulation_kernel"`
 }
 
@@ -62,7 +62,7 @@ func (c *Config) validateAndFill() error {
 	}
 
 	if c.CoagulatorName == "" {
-		return errors.New("coagulator name should be specified")
+		return errors.New("coagulation name should be specified")
 	}
 
 	if c.CoagulationKernelName == "" {
