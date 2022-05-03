@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation/predcorr"
+
 	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d"
 	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d/naiveparallel"
 	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d/parallelpool"
@@ -153,7 +155,8 @@ func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
 		return nil, fmt.Errorf("unknown coagulation kernel name %q", conf.CoagulationKernelName)
 	}
 
-	base := coagulation.New(kern, conf.TimeStep)
+	var base coagulation.Coagulator
+	base = predcorr.New(kern, conf.TimeStep)
 
 	switch conf.CoagulatorName {
 	case "Sequential":

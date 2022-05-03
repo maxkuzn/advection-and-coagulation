@@ -4,15 +4,15 @@ import (
 	"context"
 	"sync"
 
-	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
-
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation"
+
+	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
 )
 
 const numWorkers = 15
 
 type coagulator struct {
-	base *coagulation.Coagulator
+	base coagulation.Coagulator
 
 	work chan func()
 
@@ -20,7 +20,7 @@ type coagulator struct {
 	cancel func()
 }
 
-func New(base *coagulation.Coagulator) *coagulator {
+func New(base coagulation.Coagulator) *coagulator {
 	return &coagulator{
 		base: base,
 
@@ -69,7 +69,7 @@ func (c *coagulator) Process(field, buff field1d.Field) (field1d.Field, field1d.
 		c.work <- func() {
 			defer wg.Done()
 
-			c.base.Process(field.Cell(i), buff.Cell(i), field.Sizes())
+			c.base.Process(field.Cell(i), buff.Cell(i), field.Volumes())
 		}
 	}
 

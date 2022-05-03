@@ -3,20 +3,20 @@ package field1d
 import (
 	"math"
 
+	"gonum.org/v1/gonum/stat/distuv"
+
 	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
 )
 
-func gaussianPDF(mu, x float64) float64 {
-	const sigma_2 = 0.02
-
-	return 1.0 / math.Sqrt(2*sigma_2*math.Pi) * math.Exp(
-		-1.0/2*(x-mu)*(x-mu)/sigma_2,
-	)
-}
-
 func sizeFactor(vMin, v float64) float64 {
-	minF := gaussianPDF(vMin, vMin)
-	f := gaussianPDF(vMin, v)
+	const sigma_2 = 0.1
+	dist := distuv.Normal{
+		Mu:    vMin,
+		Sigma: sigma_2,
+	}
+
+	minF := dist.Prob(vMin)
+	f := dist.Prob(v)
 
 	return f / minF
 }
@@ -39,7 +39,7 @@ func Init(fieldSize, particlesSizesNum int, vMin, vMax float64) Field {
 		factor := coordFactor(x, limit)
 
 		for i := 0; i < particlesSizesNum; i++ {
-			v := field.sizes[i]
+			v := field.volumes[i]
 			field.cells[x][i] = cell.FloatType(factor * sizeFactor(vMin, v))
 		}
 	}

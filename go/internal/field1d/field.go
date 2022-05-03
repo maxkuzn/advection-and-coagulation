@@ -3,8 +3,8 @@ package field1d
 import "github.com/maxkuzn/advection-and-coagulation/internal/cell"
 
 type Field struct {
-	cells []cell.Cell
-	sizes []float64
+	cells   []cell.Cell
+	volumes []float64
 }
 
 func New(fieldSize, particlesSizesNum int, vMin, vMax float64) Field {
@@ -14,14 +14,14 @@ func New(fieldSize, particlesSizesNum int, vMin, vMax float64) Field {
 		cells = append(cells, cell.New(particlesSizesNum))
 	}
 
-	sizes := make([]float64, particlesSizesNum)
-	for i := range sizes {
-		sizes[i] = vMin + (vMax-vMin)*float64(i)/float64(len(cells)-1)
+	volumes := make([]float64, particlesSizesNum)
+	for i := range volumes {
+		volumes[i] = vMin + (vMax-vMin)*float64(i)/float64(len(cells)-1)
 	}
 
 	return Field{
-		cells: cells,
-		sizes: sizes,
+		cells:   cells,
+		volumes: volumes,
 	}
 }
 
@@ -37,6 +37,6 @@ func (f *Field) SetCell(i int, c cell.Cell) {
 	f.cells[i] = c
 }
 
-func (f *Field) Sizes() []float64 {
-	return f.sizes
+func (f *Field) Volumes() []float64 {
+	return f.volumes
 }

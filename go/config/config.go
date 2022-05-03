@@ -20,7 +20,7 @@ type Config struct {
 	AdvectionCoef float64 `json:"advection_coef"`
 
 	AdvectorName          string `json:"advector"`
-	CoagulatorName        string `json:"coagulation"`
+	CoagulatorName        string `json:"coagulator"`
 	CoagulationKernelName string `json:"coagulation_kernel"`
 }
 

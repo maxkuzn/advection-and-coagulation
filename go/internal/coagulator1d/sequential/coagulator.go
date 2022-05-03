@@ -6,10 +6,10 @@ import (
 )
 
 type coagulator struct {
-	base *coagulation.Coagulator
+	base coagulation.Coagulator
 }
 
-func New(base *coagulation.Coagulator) *coagulator {
+func New(base coagulation.Coagulator) *coagulator {
 	return &coagulator{base: base}
 }
 
@@ -23,7 +23,7 @@ func (c *coagulator) Stop() error {
 
 func (c *coagulator) Process(field, buff field1d.Field) (field1d.Field, field1d.Field) {
 	for i := 0; i < field.Len(); i++ {
-		c.base.Process(field.Cell(i), buff.Cell(i), field.Sizes())
+		c.base.Process(field.Cell(i), buff.Cell(i), field.Volumes())
 	}
 
 	return field, buff
