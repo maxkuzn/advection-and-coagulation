@@ -16,3 +16,11 @@ func NewMultiplication() *multiplication {
 func (k *multiplication) Compute(x, y float64) cell.FloatType {
 	return cell.FloatType(x * y)
 }
+
+func (k *multiplication) Len() int {
+	return 1
+}
+
+func (k *multiplication) ComputeSubSum(rank, arg int, x float64) cell.FloatType {
+	return cell.FloatType(x)
+}

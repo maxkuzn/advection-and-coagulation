@@ -18,3 +18,11 @@ func (k *identity) Compute(x, y float64) cell.FloatType {
 	_ = y // unused
 	return 1
 }
+
+func (k *identity) Len() int {
+	return 1
+}
+
+func (k *identity) ComputeSubSum(rank, arg int, x float64) cell.FloatType {
+	return 1
+}
