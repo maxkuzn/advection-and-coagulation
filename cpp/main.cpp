@@ -1,5 +1,5 @@
-#include "base/init_field_1d.h"
-#include "base/field_saver_1d.h"
+#include "base/init_field1d.h"
+#include "base/field1d_saver.h"
 
 #include "advection_1D/forward_difference.h"
 #include "advection_1D/backward_difference.h"
@@ -17,22 +17,26 @@
 constexpr std::string_view kHistoryFilename = "data/history.txt";
 
 int main() {
-	size_t field_size = 100;
-	size_t particle_sizes_num = 100;
+	size_t field_size = 200;
+	size_t particle_sizes_num = 200;
 
-	size_t time_steps = 500;
+	size_t time_steps = 1000;
 	double advection_coef = 0.1;
 
 	double time_step = 10.0 / time_steps;
 	double size_step = (1.0 - 0.1) / (particle_sizes_num - 1); // TODO: get that from Field
+
+	double vMin = 0.1;
+	double vMax = 1.0;
+
 
 	IdentityKernel kernel;
 	Coagulator coagulator(kernel, size_step, time_step);
 
 	FieldSaver saver(kHistoryFilename);
 
-	auto field1 = init_field_1d(field_size, particle_sizes_num);
-	Field1D field2(field_size, particle_sizes_num);
+	auto field1 = init_field_1d(field_size, particle_sizes_num, vMin, vMax);
+	Field1D field2(field_size, particle_sizes_num, vMin, vMax);
 
 	Field1D* field = &field1;
 	Field1D* field_buf = &field2;

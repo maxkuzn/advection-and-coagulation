@@ -1,4 +1,4 @@
-#include "field_1d.h"
+#include "cell.h"
 
 void Cell::AssignSum(double coef1, const Cell& cell1,
 					 double coef2, const Cell& cell2) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/field_1d.h"
+#include "base/field1d.h"
 #include "coagulation_1D/kernel/base.h"
 
 class Coagulator {
