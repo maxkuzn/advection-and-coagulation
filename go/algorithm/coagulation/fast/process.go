@@ -1,7 +1,9 @@
-package predcorr
+package fast
 
 import (
 	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
+	"gonum.org/v1/gonum/dsp/fourier"
+	"gonum.org/v1/gonum/mat"
 )
 
 func (c *coagulator) Process(cell, buff cell.Cell, volumes []float64) {
@@ -36,23 +38,41 @@ func (c *coagulator) computeL1(cel cell.Cell, volumes []float64, index int) cell
 	}
 
 	var res cell.FloatType
-	for i := 0; i <= index; i++ {
-		idx1 := i
-		v1 := volumes[idx1]
-
-		idx2 := index - i
-		v2 := volumes[idx2]
-
-		add := c.kernel.Compute(v1, v2) * cel[idx1] * cel[idx2]
-		if idx1 == 0 || idx2 == 0 {
-			add /= 2
-		}
-		res += add
+	for a := 0; a < c.kernel.Len(); a++ {
+		res += c.computeL1Rank(cel, volumes, index, a)
 	}
 
-	gridStep := (volumes[len(volumes)-1] - volumes[0]) / float64(len(volumes)-1)
-	res *= cell.FloatType(gridStep)
 	return res
+}
+
+func (c *coagulator) computeL1Rank(cel cell.Cell, volumes []float64, index, kernelRank int) cell.FloatType {
+	g := c.kernelXcell2vec(cel, volumes, 0, kernelRank)
+	t := c.kernelXcell2vec(cel, volumes, 1, kernelRank)
+
+	fft := fourier.NewFFT(len(g))
+	fftG := fft.Coefficients(nil, g)
+	fftT := fft.Coefficients(nil, t)
+
+	fftM := make([]complex128, 0, len(fftT))
+	for i := range fftG {
+		fftM[i] = fftG[i] * fftT[i]
+	}
+
+	mRaw := fft.Sequence(nil, fftM)
+
+	m := mat.NewVecDense(len(cel), mRaw[:len(cel)])
+	m.ScaleVec(1/float64(len(mRaw)), m)
+
+	return cell.FloatType(m.AtVec(index))
+}
+
+func (c *coagulator) kernelXcell2vec(cel cell.Cell, volumes []float64, kernelArg, kernelRank int) []float64 {
+	v := make([]float64, 2*len(cel)-1)
+	for i, x := range cel {
+		v[i] = float64(x) * float64(c.kernel.ComputeSubSum(kernelRank, kernelArg, volumes[i]))
+	}
+
+	return v
 }
 
 func (c *coagulator) computeL2(cel cell.Cell, volumes []float64, index int) cell.FloatType {

@@ -1,4 +1,4 @@
-package predcorr
+package fast
 
 import (
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation"
