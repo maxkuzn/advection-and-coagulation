@@ -6,12 +6,12 @@ import (
 )
 
 type centralDifference struct {
-	sigma cell.FloatType
+	sigma float64
 }
 
 func NewCentralDifference(sigma float64) *centralDifference {
 	return &centralDifference{
-		sigma: cell.FloatType(sigma),
+		sigma: sigma,
 	}
 }
 

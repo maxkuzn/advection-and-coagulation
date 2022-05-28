@@ -4,8 +4,6 @@ import (
 	"math"
 
 	"gonum.org/v1/gonum/stat/distuv"
-
-	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
 )
 
 func sizeFactor(vMin, v float64) float64 {
@@ -40,7 +38,7 @@ func Init(fieldSize, particlesSizesNum int, vMin, vMax float64) Field {
 
 		for i := 0; i < particlesSizesNum; i++ {
 			v := field.volumes[i]
-			field.cells[x][i] = cell.FloatType(factor * sizeFactor(vMin, v))
+			field.cells[x][i] = factor * sizeFactor(vMin, v)
 		}
 	}
 

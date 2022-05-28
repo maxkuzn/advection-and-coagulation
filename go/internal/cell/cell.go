@@ -1,19 +1,17 @@
 package cell
 
-type FloatType float64
-
-type Cell []FloatType
+type Cell []float64
 
 func New(particlesSizesNum int) Cell {
-	return make([]FloatType, particlesSizesNum)
+	return make([]float64, particlesSizesNum)
 }
 
-func Sum2(coef1 FloatType, cell1 Cell, coef2 FloatType, cell2 Cell) Cell {
+func Sum2(coef1 float64, cell1 Cell, coef2 float64, cell2 Cell) Cell {
 	if len(cell1) != len(cell2) {
 		panic("different len")
 	}
 
-	c := make([]FloatType, 0, len(cell1))
+	c := make([]float64, 0, len(cell1))
 
 	for i := range cell1 {
 		c = append(c,
@@ -25,12 +23,12 @@ func Sum2(coef1 FloatType, cell1 Cell, coef2 FloatType, cell2 Cell) Cell {
 	return c
 }
 
-func Sum3(coef1 FloatType, cell1 Cell, coef2 FloatType, cell2 Cell, coef3 FloatType, cell3 Cell) Cell {
+func Sum3(coef1 float64, cell1 Cell, coef2 float64, cell2 Cell, coef3 float64, cell3 Cell) Cell {
 	if len(cell1) != len(cell2) || len(cell1) != len(cell3) {
 		panic("different len")
 	}
 
-	c := make([]FloatType, 0, len(cell1))
+	c := make([]float64, 0, len(cell1))
 
 	for i := range cell1 {
 		c = append(c,
