@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation/fast"
+
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation/predcorr"
 
 	"github.com/maxkuzn/advection-and-coagulation/internal/coagulator1d"
@@ -67,7 +69,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	coagulator, err := newCoagulator(conf)
+	coagulator, err := newCoagulator(conf, field.Volumes())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,7 +144,7 @@ func newAdvector(conf *config.Config) (advector1d.Advector, error) {
 	}
 }
 
-func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
+func newCoagulator(conf *config.Config, volumes []float64) (coagulator1d.Coagulator, error) {
 	var kern coagulation.Kernel
 	switch conf.CoagulationKernelName {
 	case "Identity":
@@ -156,7 +158,19 @@ func newCoagulator(conf *config.Config) (coagulator1d.Coagulator, error) {
 	}
 
 	var base coagulation.Coagulator
-	base = predcorr.New(kern, conf.TimeStep)
+	switch conf.BaseCoagulatorName {
+	case "PredictorCorrector":
+		base = predcorr.New(kern, conf.TimeStep)
+	case "Fast":
+		var err error
+
+		base, err = fast.New(kern, conf.TimeStep, volumes)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unknown base coagulation name %q", conf.BaseCoagulatorName)
+	}
 
 	switch conf.CoagulatorName {
 	case "Sequential":
