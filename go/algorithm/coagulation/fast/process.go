@@ -1,93 +1,100 @@
 package fast
 
 import (
+	"github.com/maxkuzn/advection-and-coagulation/algorithm/toeplitz"
 	"github.com/maxkuzn/advection-and-coagulation/internal/cell"
-	"gonum.org/v1/gonum/dsp/fourier"
 	"gonum.org/v1/gonum/mat"
 )
 
-func (c *coagulator) Process(cell, buff cell.Cell, volumes []float64) {
-	for i := range cell {
-		buff[i] = cell[i] + c.processSizeHalf(cell, volumes, i)
-	}
+func (c *coagulator) Process(cel, buff cell.Cell, volumes []float64) {
+	cellVec := mat.NewVecDense(len(cel), cel)
+	buffMat := mat.NewVecDense(len(buff), buff)
 
-	for i := range cell {
-		cell[i] += c.processSizeFull(buff, volumes, i)
-	}
+	buffMat.AddVec(cellVec, c.processSizeHalf(cellVec, volumes))
+	cellVec.AddVec(cellVec, c.processSizeFull(buffMat, volumes))
 }
 
-func (c *coagulator) processSizeHalf(cell cell.Cell, volumes []float64, index int) float64 {
-	L1 := c.computeL1(cell, volumes, index)
-	L2 := c.computeL2(cell, volumes, index)
-	currValue := cell[index]
+func (c *coagulator) processSizeHalf(cellVec *mat.VecDense, volumes []float64) *mat.VecDense {
+	L1 := c.computeL1(cellVec, volumes)
+	L2 := c.computeL2(cellVec)
 
-	return c.timeStep / 2 * (L1 - currValue*L2)
-}
+	res := mat.NewVecDense(cellVec.Len(), nil)
 
-func (c *coagulator) processSizeFull(cell cell.Cell, volumes []float64, index int) float64 {
-	L1 := c.computeL1(cell, volumes, index)
-	L2 := c.computeL2(cell, volumes, index)
-	currValue := cell[index]
-
-	return c.timeStep * (L1 - currValue*L2)
-}
-
-func (c *coagulator) computeL1(cel cell.Cell, volumes []float64, index int) float64 {
-	if index == 0 {
-		return 0
-	}
-
-	var res float64
-	for a := 0; a < c.kernel.Len(); a++ {
-		res += c.computeL1Rank(cel, volumes, index, a)
-	}
+	// c.timeStep / 2 * (L1 - currValue*L2)
+	res.MulElemVec(cellVec, L2)
+	res.SubVec(L1, res)
+	res.ScaleVec(c.timeStep/2, res)
 
 	return res
 }
 
-func (c *coagulator) computeL1Rank(cel cell.Cell, volumes []float64, index, kernelRank int) float64 {
-	g := c.kernelXcell2vec(cel, volumes, 0, kernelRank)
-	t := c.kernelXcell2vec(cel, volumes, 1, kernelRank)
+func (c *coagulator) processSizeFull(cellVec *mat.VecDense, volumes []float64) *mat.VecDense {
+	L1 := c.computeL1(cellVec, volumes)
+	L2 := c.computeL2(cellVec)
 
-	fft := fourier.NewFFT(len(g))
-	fftG := fft.Coefficients(nil, g)
-	fftT := fft.Coefficients(nil, t)
+	res := mat.NewVecDense(cellVec.Len(), nil)
 
-	fftM := make([]complex128, 0, len(fftT))
-	for i := range fftG {
-		fftM[i] = fftG[i] * fftT[i]
-	}
+	// c.timeStep * (L1 - currValue*L2)
+	res.MulElemVec(cellVec, L2)
+	res.SubVec(L1, res)
+	res.ScaleVec(c.timeStep, res)
 
-	mRaw := fft.Sequence(nil, fftM)
-
-	m := mat.NewVecDense(len(cel), mRaw[:len(cel)])
-	m.ScaleVec(1/float64(len(mRaw)), m)
-
-	return float64(m.AtVec(index))
+	return res
 }
 
-func (c *coagulator) kernelXcell2vec(cel cell.Cell, volumes []float64, kernelArg, kernelRank int) []float64 {
-	v := make([]float64, 2*len(cel)-1)
-	for i, x := range cel {
+func (c *coagulator) computeL1(cellVec *mat.VecDense, volumes []float64) *mat.VecDense {
+	res := mat.NewVecDense(cellVec.Len(), nil)
+	for a := 0; a < c.kernel.Len(); a++ {
+		res.AddVec(res, c.computeL1Rank(cellVec, volumes, a))
+	}
+
+	res.SetVec(0, 0)
+
+	return res
+}
+
+func (c *coagulator) computeL1Rank(cellVec *mat.VecDense, volumes []float64, kernelRank int) *mat.VecDense {
+	f := c.kernelXcell2vec(cellVec, volumes, kernelRank, 0)
+	g := c.kernelXcell2vec(cellVec, volumes, kernelRank, 1)
+
+	Tg := toeplitz.Multiply(f, g)
+
+	fVec := mat.NewVecDense(len(f), f)
+	gVec := mat.NewVecDense(len(g), g)
+
+	// g_0 * f
+	fVec.ScaleVec(gVec.AtVec(0), fVec)
+	// f_0 * g
+	gVec.ScaleVec(fVec.AtVec(0), gVec)
+
+	res := mat.NewVecDense(cellVec.Len(), nil)
+	// h(Tg - 0.5 * T'g)
+	res.AddVec(gVec, fVec)
+	res.ScaleVec(0.5, res)
+	res.SubVec(mat.NewVecDense(len(Tg), Tg), res)
+
+	gridStep := (volumes[len(volumes)-1] - volumes[0]) / float64(len(volumes)-1)
+	res.ScaleVec(gridStep, res)
+
+	return res
+}
+
+func (c *coagulator) kernelXcell2vec(cellVec *mat.VecDense, volumes []float64, kernelRank, kernelArg int) []float64 {
+	v := make([]float64, cellVec.Len())
+	for i := 0; i < cellVec.Len(); i++ {
+		x := cellVec.AtVec(i)
 		v[i] = x * c.kernel.ComputeSubSum(kernelRank, kernelArg, volumes[i])
 	}
 
 	return v
 }
 
-func (c *coagulator) computeL2(cel cell.Cell, volumes []float64, index int) float64 {
-	var res float64
-	for i := 0; i < len(cel); i++ {
-		add := c.kernel.Compute(volumes[index], volumes[i]) * cel[i]
+func (c *coagulator) computeL2(cellVec *mat.VecDense) *mat.VecDense {
+	interRes := mat.NewVecDense(cellVec.Len(), nil)
+	interRes.MulVec(c.v, cellVec)
 
-		if i == 0 || i+1 == len(cel) {
-			add /= 2
-		}
+	res := mat.NewVecDense(cellVec.Len(), nil)
+	res.MulVec(c.u, interRes)
 
-		res += add
-	}
-
-	gridStep := (volumes[len(volumes)-1] - volumes[0]) / float64(len(volumes)-1)
-	res *= gridStep
 	return res
 }
