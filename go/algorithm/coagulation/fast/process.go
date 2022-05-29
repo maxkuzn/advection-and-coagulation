@@ -90,7 +90,8 @@ func (c *coagulator) kernelXcell2vec(cellVec *mat.VecDense, volumes []float64, k
 }
 
 func (c *coagulator) computeL2(cellVec *mat.VecDense) *mat.VecDense {
-	interRes := mat.NewVecDense(cellVec.Len(), nil)
+	vr, _ := c.v.Dims()
+	interRes := mat.NewVecDense(vr, nil)
 	interRes.MulVec(c.v, cellVec)
 
 	res := mat.NewVecDense(cellVec.Len(), nil)

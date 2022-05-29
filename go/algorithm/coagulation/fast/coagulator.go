@@ -1,8 +1,6 @@
 package fast
 
 import (
-	"fmt"
-
 	decompose2 "github.com/maxkuzn/advection-and-coagulation/algorithm/decompose"
 
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation"
@@ -24,10 +22,6 @@ func New(kernel coagulation.Kernel, timeStep float64, volumes []float64) (*coagu
 		return nil, err
 	}
 
-	ur, uc := u.Dims()
-	vr, vc := v.Dims()
-
-	fmt.Printf("Result:\nu = (%d, %d)\nv = (%d, %d)\n\n", ur, uc, vr, vc)
 	return &coagulator{
 		kernel:   kernel,
 		timeStep: timeStep,
@@ -61,15 +55,6 @@ func decompose(k mat.Matrix) (mat.Matrix, mat.Matrix, error) {
 		return nil, nil, err
 	}
 
-	ur, uc := u.Dims()
-	sr, sc := len(s), len(s)
-	vr, vc := v.Dims()
-
-	fmt.Printf("u = (%d, %d)\ns = (%d, %d)\nv = (%d, %d)\n\n",
-		ur, uc,
-		sr, sc,
-		vr, vc,
-	)
 	r, c := v.Dims()
 	sv := mat.NewDense(c, r, nil)
 	sv.Product(mat.NewDiagDense(len(s), s), v.T())
