@@ -16,7 +16,7 @@ func New(fieldSize, particlesSizesNum int, vMin, vMax float64) Field {
 
 	volumes := make([]float64, particlesSizesNum)
 	for i := range volumes {
-		volumes[i] = vMin + (vMax-vMin)*float64(i)/float64(len(cells)-1)
+		volumes[i] = vMin + (vMax-vMin)*float64(i)/float64(len(volumes)-1)
 	}
 
 	return Field{
