@@ -1,29 +1,31 @@
-package field1d
+package saver
 
 import (
 	"bufio"
 	"fmt"
 	"io"
+
+	"github.com/maxkuzn/advection-and-coagulation/internal/field1d"
 )
 
-type Saver struct {
+type saver struct {
 	w         *bufio.Writer
 	firstSave bool
 }
 
-func NewSaver(w io.Writer) *Saver {
-	return &Saver{
+func NewSaver(w io.Writer) *saver {
+	return &saver{
 		w:         bufio.NewWriter(w),
 		firstSave: true,
 	}
 }
 
-func (s *Saver) saveHeader(f Field) error {
+func (s *saver) saveHeader(f field1d.Field) error {
 	_, err := fmt.Fprintf(s.w, "%d\n", f.Len())
 	return err
 }
 
-func (s *Saver) Save(f Field) error {
+func (s *saver) Save(f field1d.Field) error {
 	if s.firstSave {
 		err := s.saveHeader(f)
 		if err != nil {
@@ -51,6 +53,6 @@ func (s *Saver) Save(f Field) error {
 	return nil
 }
 
-func (s *Saver) Flush() error {
+func (s *saver) Flush() error {
 	return s.w.Flush()
 }

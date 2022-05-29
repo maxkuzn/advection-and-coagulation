@@ -3,8 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
+
+	"github.com/maxkuzn/advection-and-coagulation/internal/field1d/saver"
 
 	"github.com/maxkuzn/advection-and-coagulation/algorithm/coagulation/fast"
 
@@ -54,9 +57,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	saver := field1d.NewSaver(saveFile)
+	s := saver.NewSaver(saveFile)
 	defer func() {
-		err := saver.Flush()
+		err := s.Flush()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -89,13 +92,13 @@ func main() {
 	}
 	defer stop()
 
-	run(conf, field, buff, saver, advector, coagulator)
+	run(conf, field, buff, s, advector, coagulator)
 }
 
 func run(
 	conf *config.Config,
 	field, buff field1d.Field,
-	saver *field1d.Saver,
+	saver saver.Saver,
 	advector advector1d.Advector,
 	coagulator coagulator1d.Coagulator,
 ) {
@@ -133,6 +136,20 @@ func initFields(conf *config.Config) (field1d.Field, field1d.Field) {
 	buff := field1d.New(conf.FieldCellsSize, conf.ParticlesSizesNum, conf.MinParticleSize, conf.MaxParticleSize)
 
 	return field, buff
+}
+
+func newSaver(conf *config.Config, writeTo io.Writer) (saver.Saver, error) {
+	switch conf.SaverName {
+	case "Sync":
+		return saver.NewSaver(writeTo), nil
+	case "Async":
+		// return saver.NewSaver(writeTo), nil
+		return nil, fmt.Errorf("async saver is not implemented")
+	case "-":
+		return saver.NewMock(), nil
+	default:
+		return nil, fmt.Errorf("unknown saver name %q", conf.SaverName)
+	}
 }
 
 func newAdvector(conf *config.Config) (advector1d.Advector, error) {

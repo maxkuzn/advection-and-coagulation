@@ -19,6 +19,7 @@ type Config struct {
 
 	AdvectionCoef float64 `json:"advection_coef"`
 
+	SaverName             string `json:"saver"`
 	AdvectorName          string `json:"advector"`
 	BaseCoagulatorName    string `json:"base_coagulator"`
 	CoagulatorName        string `json:"coagulator"`
@@ -58,6 +59,10 @@ func (c *Config) validateAndFill() error {
 		return errors.New("advection coefficient should be specified as positive")
 	}
 
+	if c.SaverName == "" {
+		return errors.New("saver name should be specified")
+	}
+
 	if c.AdvectorName == "" {
 		return errors.New("advection name should be specified")
 	}
@@ -86,7 +91,6 @@ func Read(filename string) (*Config, error) {
 
 	config := &Config{}
 	d := json.NewDecoder(f)
-	d.DisallowUnknownFields()
 
 	err = d.Decode(config)
 	if err != nil {
