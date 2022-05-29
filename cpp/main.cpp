@@ -5,6 +5,10 @@
 
 #include "algorithm/advector1d/advector.h"
 #include "algorithm/advector1d/central_difference.h"
+#include "algorithm/coagulation/predcorr/coagulator.h"
+#include "algorithm/coagulation/kernel/identity.h"
+
+#include "coagulator1d/sequential/coagulator.h"
 
 #include "util/progress.h"
 
@@ -15,11 +19,6 @@
 #include <string_view>
 
 
-
-#include "coagulation_1D/coagulation.h"
-#include "coagulation_1D/kernel/identity.h"
-
-
 constexpr std::string_view kHistoryFilename = "data/history.txt";
 
 
@@ -27,11 +26,12 @@ void run(
 	const Config& cfg,
 	Field1D* field, Field1D* buff,
 	FieldSaver& saver,
-	advection::Advector& advector
-	// Coagulator1D& coagulator
+	advection::Advector& advector,
+	coagulation::Coagulator1D& coagulator
 );
 
 int main() {
+	// 1
 	Config cfg{
 		.field_size = 200,
 		.field_cells_size = 200,
@@ -52,13 +52,6 @@ int main() {
 		std::cerr << "Invalid config\n";
 		std::exit(1);
 	}
-
-	size_t particle_sizes_num = 200;
-
-	double size_step = (1.0 - 0.1) / (particle_sizes_num - 1); // TODO: get that from Field
-
-	// 1
-	// Config cfg;
 
 	// 2
 	FieldSaver saver(kHistoryFilename);
@@ -86,8 +79,17 @@ int main() {
 
 	// 5
 	// coagulator
-	IdentityKernel kernel;
-	Coagulator coagulator(kernel, size_step, cfg.time_step);
+	auto kernel = std::shared_ptr<coagulation::Kernel>(
+			new coagulation::IdentityKernel()
+	);
+
+	auto base_coagulator = std::shared_ptr<coagulation::Coagulator>(
+			new coagulation::PredCorrCoagulator(kernel, cfg.time_step)
+	);
+
+	auto coagulator = std::shared_ptr<coagulation::Coagulator1D>(
+			new coagulation::SequentialCoagulator1D(base_coagulator)
+	);
 
 	// 6
 	// run
@@ -95,8 +97,8 @@ int main() {
 		cfg,
 		field, field_buff,
 		saver,
-		*advector
-		// coagulator
+		*advector,
+		*coagulator
 	);
 
 }
@@ -105,29 +107,29 @@ void run(
 	const Config& cfg,
 	Field1D* field, Field1D* buff,
 	FieldSaver& saver,
-	advection::Advector& advector
-	// Coagulator1D* coagulator
+	advection::Advector& advector,
+	coagulation::Coagulator1D& coagulator
 ) {
-	(void) cfg;
-	(void) field;
-	(void) buff;
-	(void) saver;
-	(void) advector;
-	/*
-	std::cout << progress(0, time_steps) << '\r';
+	std::cout << progress(0, cfg.time_steps) << '\r';
 	std::cout.flush();
 
 	saver.Save(*field);
-	for (size_t t = 0; t < time_steps; t++) {
-		cent_diff(*field, *field_buf, advection_coef);
-		std::swap(field, field_buf);
+	for (size_t t = 0; t < cfg.time_steps; t++) {
+		{
+			auto [f, b] = advector.Process(field, buff);
+			field = f;
+			buff = b;
+		}
 
-		coagulator.Process(*field, *field_buf);
+		{
+			auto [f, b] = coagulator.Process(field, buff);
+			field = f;
+			buff = b;
+		}
 
 		saver.Save(*field);
 
-		std::cout << progress(t + 1, time_steps) << '\r';
+		std::cout << progress(t + 1, cfg.time_steps) << '\r';
 		std::cout.flush();
 	}
-	*/
 }

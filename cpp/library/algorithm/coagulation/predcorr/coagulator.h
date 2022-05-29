@@ -18,9 +18,14 @@ class PredCorrCoagulator : public Coagulator {
 
 	~PredCorrCoagulator() = default;
 
-	double Process(Cell* cell, Cell* buff, const std::vector<double>& volumes) override;
+	void Process(Cell* cell, Cell* buff, const std::vector<double>& volumes) override;
 
   private:
+	double ProcessHalf(Cell& cell, const std::vector<double>& volumes, size_t idx);
+	double ProcessFull(Cell& cell, const std::vector<double>& volumes, size_t idx);
+	double ComputeL1(Cell& cell, const std::vector<double>& volumes, size_t idx);
+	double ComputeL2(Cell& cell, const std::vector<double>& volumes, size_t idx);
+
 	std::shared_ptr<Kernel> kernel_;
 	const double time_step_;
 };
