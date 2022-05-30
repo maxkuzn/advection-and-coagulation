@@ -9,6 +9,7 @@
 #include "algorithm/coagulation/kernel/identity.h"
 
 #include "coagulator1d/sequential/coagulator.h"
+#include "coagulator1d/naiveparallel/coagulator.h"
 
 #include "util/progress.h"
 
@@ -30,23 +31,58 @@ void run(
 	coagulation::Coagulator1D& coagulator
 );
 
+std::shared_ptr<coagulation::Coagulator1D> chooseCoagulator(const Config& cfg) {
+    auto kernel = std::shared_ptr<coagulation::Kernel>(
+            new coagulation::IdentityKernel()
+    );
+
+    std::shared_ptr<coagulation::Coagulator> base_coagulator;
+    if (cfg.base_coagulator_name == "PredictorCorrector") {
+        base_coagulator = std::shared_ptr<coagulation::Coagulator>(
+                new coagulation::PredCorrCoagulator(kernel, cfg.time_step)
+        );
+    } else if (cfg.base_coagulator_name == "Fast") {
+        throw std::runtime_error("Not implemented base coagulator");
+    } else {
+        throw std::runtime_error("Unknown base coagulator");
+    }
+
+    std::shared_ptr<coagulation::Coagulator1D> coagulator;
+    if (cfg.coagulator_name == "Sequential") {
+        coagulator = std::shared_ptr<coagulation::Coagulator1D>(
+                new coagulation::SequentialCoagulator1D(base_coagulator)
+        );
+    } else if (cfg.coagulator_name == "NaiveParallel") {
+        coagulator = std::shared_ptr<coagulation::Coagulator1D>(
+                new coagulation::NaiveParallelCoagulator1D(base_coagulator)
+        );
+    } else if (cfg.coagulator_name == "ParallelPool") {
+        throw std::runtime_error("Not implemented coagulator");
+    } else {
+        throw std::runtime_error("Unknown coagulator");
+    }
+
+    return coagulator;
+}
+
 int main() {
 	// 1
 	Config cfg{
-		.field_size = 200,
-		.field_cells_size = 200,
-		.particles_sizes_num = 200,
+		.field_size = 1.0,
+		.field_cells_size = 100,
+		.particles_sizes_num = 100,
 		.min_particle_size = 0.1,
 		.max_particle_size = 1.0,
 
-		.total_time = 10.0,
-		.time_steps = 1000,
+		.total_time = 20.0,
+		.time_steps = 100,
 
 		.advection_coef = 0.1,
 
 		.advector_name = "CentralDifference",
-		.coagulator_name = "Sequential",
-		.coagulation_kernel_name = "Identity",
+        .coagulation_kernel_name = "Identity",
+        .base_coagulator_name = "PredictorCorrector", // "PredictorCorrector", "Fast"
+		.coagulator_name = "Sequential",  // "Sequential", "NaiveParallel", "ParallelPool"
 	};
 	if (!cfg.ValidateAndFill()) {
 		std::cerr << "Invalid config\n";
@@ -77,19 +113,7 @@ int main() {
 			new advection::CentralDifference(cfg.advection_coef)
 	);
 
-	// 5
-	// coagulator
-	auto kernel = std::shared_ptr<coagulation::Kernel>(
-			new coagulation::IdentityKernel()
-	);
-
-	auto base_coagulator = std::shared_ptr<coagulation::Coagulator>(
-			new coagulation::PredCorrCoagulator(kernel, cfg.time_step)
-	);
-
-	auto coagulator = std::shared_ptr<coagulation::Coagulator1D>(
-			new coagulation::SequentialCoagulator1D(base_coagulator)
-	);
+    auto coagulator = chooseCoagulator(cfg);
 
 	// 6
 	// run

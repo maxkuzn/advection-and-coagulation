@@ -17,8 +17,10 @@ struct Config {
 	double advection_coef;
 
 	std::string advector_name;
+
+    std::string coagulation_kernel_name;
+    std::string base_coagulator_name;
 	std::string coagulator_name;
-	std::string coagulation_kernel_name;
 
 	bool ValidateAndFill() {
 		if (field_size <= 0) {
@@ -52,12 +54,16 @@ struct Config {
 		if (advector_name.empty()) {
 			return false;
 		}
-		
-		if (coagulator_name.empty()) {
-			return false;
-		}
 
-		if (coagulation_kernel_name.empty()) {
+        if (coagulation_kernel_name.empty()) {
+            return false;
+        }
+
+        if (base_coagulator_name.empty()) {
+            return false;
+        }
+
+        if (coagulator_name.empty()) {
 			return false;
 		}
 
