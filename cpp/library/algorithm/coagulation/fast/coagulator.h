@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 
+#include <Eigen/Dense>
 
 namespace coagulation {
 
@@ -19,13 +20,13 @@ class FastCoagulator : public Coagulator {
     void Process(Cell* cell, Cell* buff, const std::vector<double>& volumes) override;
 
   private:
-    double ProcessHalf(Cell& cell, const std::vector<double>& volumes, size_t idx);
+    double ProcessHalf(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx);
 
-    double ProcessFull(Cell& cell, const std::vector<double>& volumes, size_t idx);
+    double ProcessFull(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx);
 
-    double ComputeL1(Cell& cell, const std::vector<double>& volumes, size_t idx);
+    double ComputeL1(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx);
 
-    double ComputeL2(Cell& cell, const std::vector<double>& volumes, size_t idx);
+    double ComputeL2(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx);
 
     std::shared_ptr<Kernel> kernel_;
     const double time_step_;

@@ -1,21 +1,30 @@
 #include "coagulator.h"
 
+#include <Eigen/Dense>
+
 namespace coagulation {
 
-void FastCoagulator::Process(Cell* cell, Cell* buff, const std::vector<double>& volumes) {
-    Cell& c = *cell;
-    Cell& b = *buff;
+void FastCoagulator::Process(Cell* cell, Cell* /*buff*/, const std::vector<double>& volumes) {
+    Cell& cell_ref = *cell;
 
-    for (size_t i = 0; i < c.Size(); i++) {
+    Eigen::VectorXd c(cell_ref.Size());
+    for (size_t i = 0; i < cell_ref.Size(); i++) {
+        c[i] = cell_ref[i];
+    }
+
+    Eigen::VectorXd b(cell->Size());
+
+    for (size_t i = 0; i < size_t(c.size()); i++) {
         b[i] = c[i] + ProcessHalf(c, volumes, i);
     }
 
-    for (size_t i = 0; i < c.Size(); i++) {
-        c[i] += ProcessFull(b, volumes, i);
+    for (size_t i = 0; i < size_t(c.size()); i++) {
+        cell_ref[i] += ProcessFull(b, volumes, i);
     }
+
 }
 
-double FastCoagulator::ProcessHalf(Cell& cell, const std::vector<double>& volumes, size_t idx) {
+double FastCoagulator::ProcessHalf(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx) {
     auto L1 = ComputeL1(cell, volumes, idx);
     auto L2 = ComputeL2(cell, volumes, idx);
     auto curr_value = cell[idx];
@@ -23,7 +32,7 @@ double FastCoagulator::ProcessHalf(Cell& cell, const std::vector<double>& volume
     return time_step_ / 2 * (L1 - curr_value * L2);
 }
 
-double FastCoagulator::ProcessFull(Cell& cell, const std::vector<double>& volumes, size_t idx) {
+double FastCoagulator::ProcessFull(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx) {
     auto L1 = ComputeL1(cell, volumes, idx);
     auto L2 = ComputeL2(cell, volumes, idx);
     auto curr_value = cell[idx];
@@ -31,7 +40,7 @@ double FastCoagulator::ProcessFull(Cell& cell, const std::vector<double>& volume
     return time_step_ * (L1 - curr_value * L2);
 }
 
-double FastCoagulator::ComputeL1(Cell& cell, const std::vector<double>& volumes, size_t idx) {
+double FastCoagulator::ComputeL1(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx) {
     if (idx == 0) {
         return 0;
     }
@@ -58,12 +67,12 @@ double FastCoagulator::ComputeL1(Cell& cell, const std::vector<double>& volumes,
     return res;
 }
 
-double FastCoagulator::ComputeL2(Cell& cell, const std::vector<double>& volumes, size_t idx) {
+double FastCoagulator::ComputeL2(Eigen::VectorXd& cell, const std::vector<double>& volumes, size_t idx) {
     double res = 0;
-    for (size_t i = 0; i < cell.Size(); i++) {
+    for (size_t i = 0; i < size_t(cell.size()); i++) {
         double add = kernel_->Compute(volumes[idx], volumes[i]) * cell[i];
 
-        if (i == 0 || i + 1 == cell.Size()) {
+        if (i == 0 || i + 1 == size_t(cell.size())) {
             add /= 2;
         }
 
