@@ -23,7 +23,7 @@ std::pair<Field1D*, Field1D*> NaiveParallelCoagulator1D::Process(Field1D* field,
         threads.emplace_back(&NaiveParallelCoagulator1D::DoWork, this, &f[i], &b[i], field->Volumes());
     }
 
-    for (auto&& t : threads) {
+    for (auto&& t: threads) {
         t.join();
     }
 
@@ -34,4 +34,4 @@ void NaiveParallelCoagulator1D::DoWork(Cell* cell, Cell* buff, const std::vector
     base_coagulator_->Process(cell, buff, volumes);
 }
 
-};  // namespace coagulation
+} // namespace coagulation
