@@ -6,15 +6,15 @@ import (
 
 func (c *coagulator) Process(cell, buff cell.Cell, volumes []float64) {
 	for i := range cell {
-		buff[i] = cell[i] + c.processSizeHalf(cell, volumes, i)
+		buff[i] = cell[i] + c.processHalf(cell, volumes, i)
 	}
 
 	for i := range cell {
-		cell[i] += c.processSizeFull(buff, volumes, i)
+		cell[i] += c.processFull(buff, volumes, i)
 	}
 }
 
-func (c *coagulator) processSizeHalf(cell cell.Cell, volumes []float64, index int) float64 {
+func (c *coagulator) processHalf(cell cell.Cell, volumes []float64, index int) float64 {
 	L1 := c.computeL1(cell, volumes, index)
 	L2 := c.computeL2(cell, volumes, index)
 	currValue := cell[index]
@@ -22,7 +22,7 @@ func (c *coagulator) processSizeHalf(cell cell.Cell, volumes []float64, index in
 	return c.timeStep / 2 * (L1 - currValue*L2)
 }
 
-func (c *coagulator) processSizeFull(cell cell.Cell, volumes []float64, index int) float64 {
+func (c *coagulator) processFull(cell cell.Cell, volumes []float64, index int) float64 {
 	L1 := c.computeL1(cell, volumes, index)
 	L2 := c.computeL2(cell, volumes, index)
 	currValue := cell[index]
