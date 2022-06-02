@@ -8,6 +8,7 @@
 #include "algorithm/coagulation/predcorr/coagulator.h"
 #include "algorithm/coagulation/fast/coagulator.h"
 #include "algorithm/coagulation/kernel/identity.h"
+#include "algorithm/coagulation/kernel/addition.h"
 
 #include "coagulator1d/sequential/coagulator.h"
 #include "coagulator1d/naiveparallel/coagulator.h"
@@ -33,9 +34,18 @@ void run(
 );
 
 std::shared_ptr<coagulation::Coagulator1D> chooseCoagulator(const Config& cfg, const std::vector<double>& volumes) {
-    auto kernel = std::shared_ptr<coagulation::Kernel>(
-            new coagulation::IdentityKernel()
-    );
+    std::shared_ptr<coagulation::Kernel> kernel;
+    if (cfg.coagulation_kernel_name == "Identity") {
+        kernel = std::shared_ptr<coagulation::Kernel>(
+                new coagulation::IdentityKernel()
+        );
+    } else if (cfg.base_coagulator_name == "Addition") {
+        kernel = std::shared_ptr<coagulation::Kernel>(
+                new coagulation::AdditionKernel()
+        );
+    } else {
+        throw std::runtime_error("Unknown coagulation kernel");
+    }
 
     std::shared_ptr<coagulation::Coagulator> base_coagulator;
     if (cfg.base_coagulator_name == "PredictorCorrector") {
@@ -85,7 +95,7 @@ int main() {
             .advection_coef = 0.1,
 
             .advector_name = "CentralDifference",
-            .coagulation_kernel_name = "Identity",
+            .coagulation_kernel_name = "Identity", // "Identity", "Addition"
             .base_coagulator_name = "Fast", // "PredictorCorrector", "Fast"
             .coagulator_name = "Sequential",  // "Sequential", "NaiveParallel", "ParallelPool"
     };
