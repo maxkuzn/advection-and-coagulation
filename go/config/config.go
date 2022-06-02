@@ -24,6 +24,7 @@ type Config struct {
 	BaseCoagulatorName    string `json:"base_coagulator"`
 	CoagulatorName        string `json:"coagulator"`
 	CoagulationKernelName string `json:"coagulation_kernel"`
+	CoagulatorBatchSize   int    `json:"batch_size"`
 }
 
 func (c *Config) validateAndFill() error {
@@ -77,6 +78,10 @@ func (c *Config) validateAndFill() error {
 
 	if c.CoagulationKernelName == "" {
 		return errors.New("coagulation kernel name should be specified")
+	}
+
+	if c.CoagulatorBatchSize <= 0 {
+		return errors.New("batch size should be specified as positive")
 	}
 
 	c.TimeStep = c.TotalTime / float64(c.TimeSteps)

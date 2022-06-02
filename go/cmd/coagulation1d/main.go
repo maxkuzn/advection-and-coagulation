@@ -193,9 +193,9 @@ func newCoagulator(conf *config.Config, volumes []float64) (coagulator1d.Coagula
 	case "Sequential":
 		return sequential.New(base), nil
 	case "NaiveParallel":
-		return naiveparallel.New(base), nil
+		return naiveparallel.New(base, conf.CoagulatorBatchSize), nil
 	case "ParallelPool":
-		return parallelpool.New(base), nil
+		return parallelpool.New(base, conf.CoagulatorBatchSize), nil
 	default:
 		return nil, fmt.Errorf("unknown coagulation name %q", conf.CoagulatorName)
 	}

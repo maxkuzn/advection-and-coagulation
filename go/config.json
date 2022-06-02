@@ -1,12 +1,12 @@
 {
   "field_size": 1,
-  "field_cells_size": 200,
+  "field_cells_size": 500,
   "particles_sizes_num": 500,
   "min_particle_size": 0.1,
   "max_particle_size": 1.0,
 
   "total_time": 20.0,
-  "time_steps": 100,
+  "time_steps": 200,
 
   "advection_coef": 0.1,
 
@@ -30,12 +30,14 @@
     "NaiveParallel",
     "ParallelPool"
   ],
-  "coagulator": "Sequential",
+  "coagulator": "ParallelPool",
 
   "coagulation_kernel_possible_values": [
     "Identity",
     "Addition",
     "Multiplication"
   ],
-  "coagulation_kernel": "Addition"
+  "coagulation_kernel": "Addition",
+
+  "batch_size": 10
 }

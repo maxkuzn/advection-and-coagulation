@@ -12,7 +12,8 @@ import (
 const numWorkers = 15
 
 type coagulator struct {
-	base coagulation.Coagulator
+	base      coagulation.Coagulator
+	batchSize int
 
 	work chan func()
 
@@ -20,11 +21,11 @@ type coagulator struct {
 	cancel func()
 }
 
-func New(base coagulation.Coagulator) *coagulator {
+func New(base coagulation.Coagulator, batchSize int) *coagulator {
 	return &coagulator{
-		base: base,
-
-		work: make(chan func(), numWorkers),
+		base:      base,
+		batchSize: batchSize,
+		work:      make(chan func(), numWorkers),
 	}
 }
 
@@ -62,14 +63,20 @@ func (c *coagulator) runWorker(ctx context.Context) {
 func (c *coagulator) Process(field, buff field1d.Field) (field1d.Field, field1d.Field) {
 	var wg sync.WaitGroup
 
-	for i := 0; i < field.Len(); i++ {
-		i := i
+	for i := 0; i < field.Len(); i += c.batchSize {
+		startIdx := i
+		endIdx := i + c.batchSize
+		if endIdx > field.Len() {
+			endIdx = field.Len()
+		}
 
 		wg.Add(1)
 		c.work <- func() {
 			defer wg.Done()
 
-			c.base.Process(field.Cell(i), buff.Cell(i), field.Volumes())
+			for j := startIdx; j < endIdx; j++ {
+				c.base.Process(field.Cell(j), buff.Cell(j), field.Volumes())
+			}
 		}
 	}
 
