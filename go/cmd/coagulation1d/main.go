@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/maxkuzn/advection-and-coagulation/internal/field1d/saver"
 
@@ -102,6 +103,12 @@ func run(
 	advector advector1d.Advector,
 	coagulator coagulator1d.Coagulator,
 ) {
+	start := time.Now()
+	defer func() {
+		diff := time.Since(start)
+		fmt.Printf("\nTime: %.3f\n", diff.Seconds())
+	}()
+
 	err := saver.Save(field)
 	if err != nil {
 		log.Fatal(err)
