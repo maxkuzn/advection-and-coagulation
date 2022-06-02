@@ -32,7 +32,7 @@ void run(
         coagulation::Coagulator1D& coagulator
 );
 
-std::shared_ptr<coagulation::Coagulator1D> chooseCoagulator(const Config& cfg, const std::vector<double> volumes) {
+std::shared_ptr<coagulation::Coagulator1D> chooseCoagulator(const Config& cfg, const std::vector<double>& volumes) {
     auto kernel = std::shared_ptr<coagulation::Kernel>(
             new coagulation::IdentityKernel()
     );
@@ -44,7 +44,7 @@ std::shared_ptr<coagulation::Coagulator1D> chooseCoagulator(const Config& cfg, c
         );
     } else if (cfg.base_coagulator_name == "Fast") {
         base_coagulator = std::shared_ptr<coagulation::Coagulator>(
-                new coagulation::FastCoagulator(kernel, cfg.time_step)
+                new coagulation::FastCoagulator(kernel, cfg.time_step, volumes)
         );
     } else {
         throw std::runtime_error("Unknown base coagulator");
@@ -74,20 +74,20 @@ int main() {
     // 1
     Config cfg{
             .field_size = 1.0,
-            .field_cells_size = 100,
-            .particles_sizes_num = 100,
+            .field_cells_size = 200,
+            .particles_sizes_num = 200,
             .min_particle_size = 0.1,
             .max_particle_size = 1.0,
 
             .total_time = 20.0,
-            .time_steps = 100,
+            .time_steps = 500,
 
             .advection_coef = 0.1,
 
             .advector_name = "CentralDifference",
             .coagulation_kernel_name = "Identity",
             .base_coagulator_name = "Fast", // "PredictorCorrector", "Fast"
-            .coagulator_name = "ParallelPool",  // "Sequential", "NaiveParallel", "ParallelPool"
+            .coagulator_name = "Sequential",  // "Sequential", "NaiveParallel", "ParallelPool"
     };
     if (!cfg.ValidateAndFill()) {
         std::cerr << "Invalid config\n";
