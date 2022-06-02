@@ -67,11 +67,11 @@ std::shared_ptr<coagulation::Coagulator1D> chooseCoagulator(const Config& cfg, c
         );
     } else if (cfg.coagulator_name == "NaiveParallel") {
         coagulator = std::shared_ptr<coagulation::Coagulator1D>(
-                new coagulation::NaiveParallelCoagulator1D(base_coagulator)
+                new coagulation::NaiveParallelCoagulator1D(base_coagulator, cfg.batch_size)
         );
     } else if (cfg.coagulator_name == "ParallelPool") {
         coagulator = std::shared_ptr<coagulation::Coagulator1D>(
-                new coagulation::ParallelPoolCoagulator1D(base_coagulator, volumes)
+                new coagulation::ParallelPoolCoagulator1D(base_coagulator, volumes, cfg.batch_size)
         );
     } else {
         throw std::runtime_error("Unknown coagulator");
@@ -97,7 +97,8 @@ int main() {
             .advector_name = "CentralDifference",
             .coagulation_kernel_name = "Identity", // "Identity", "Addition"
             .base_coagulator_name = "Fast", // "PredictorCorrector", "Fast"
-            .coagulator_name = "Sequential",  // "Sequential", "NaiveParallel", "ParallelPool"
+            .coagulator_name = "NaiveParallel",  // "Sequential", "NaiveParallel", "ParallelPool"
+            .batch_size = 1,
     };
     if (!cfg.ValidateAndFill()) {
         std::cerr << "Invalid config\n";

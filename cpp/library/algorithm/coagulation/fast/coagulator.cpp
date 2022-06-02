@@ -38,7 +38,6 @@ Eigen::VectorXd FastCoagulator::ProcessFull(Eigen::VectorXd& cell, const std::ve
 }
 
 Eigen::VectorXd FastCoagulator::ComputeL1(Eigen::VectorXd& cell, const std::vector<double>& volumes) {
-    /*
     Eigen::VectorXd res(cell.size());
     res.setZero();
 
@@ -49,7 +48,8 @@ Eigen::VectorXd FastCoagulator::ComputeL1(Eigen::VectorXd& cell, const std::vect
     res[0] = 0;
 
     return res;
-    */
+
+    /*
     Eigen::VectorXd resVec(cell.size());
 
     for (size_t idx = 0; idx < size_t(cell.size()); idx++) {
@@ -80,6 +80,7 @@ Eigen::VectorXd FastCoagulator::ComputeL1(Eigen::VectorXd& cell, const std::vect
     }
 
     return resVec;
+    */
 }
 
 Eigen::VectorXd FastCoagulator::ComputeL1Rank(Eigen::VectorXd& cell, const std::vector<double>& volumes,

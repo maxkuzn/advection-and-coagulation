@@ -8,16 +8,16 @@
 namespace coagulation {
 
 std::pair<Field1D*, Field1D*> ParallelPoolCoagulator1D::Process(Field1D* field, Field1D* buff) {
-    Field1D& f = *field;
-    Field1D& b = *buff;
-
     std::vector<std::thread> threads;
-    threads.reserve(f.Size());
+    threads.reserve(field->Size());
 
-    for (size_t i = 0; i < f.Size(); i++) {
+    for (size_t i = 0; i < field->Size(); i += batch_size_) {
+        size_t start = i;
+        size_t end = std::min(i + batch_size_, field->Size());
+
         std::unique_lock lock(mtx_);
 
-        queue_.push(std::make_pair(&f[i], &b[i]));
+        queue_.push(std::make_tuple(field, buff, start, end));
 
         cv_.notify_one();
     }
@@ -40,12 +40,18 @@ void ParallelPoolCoagulator1D::DoWork() {
             return;
         }
 
-        auto [cell, buff] = queue_.front();
+        auto [field, buff, start, end] = queue_.front();
         queue_.pop();
 
         lock.unlock();
 
-        base_coagulator_->Process(cell, buff, volumes_);
+        Field1D& f = *field;
+        Field1D& b = *buff;
+
+
+        for (size_t i = start; i < end; i++) {
+            base_coagulator_->Process(&f[i], &b[i], volumes_);
+        }
     }
 }
 
