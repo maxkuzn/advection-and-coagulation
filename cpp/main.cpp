@@ -2,6 +2,8 @@
 
 #include "base/init_field1d.h"
 #include "base/field1d_saver.h"
+#include "base/saver/sync_saver.h"
+#include "base/saver/mock_saver.h"
 
 #include "algorithm/advector1d/advector.h"
 #include "algorithm/advector1d/central_difference.h"
@@ -33,13 +35,32 @@ void run(
         coagulation::Coagulator1D& coagulator
 );
 
+std::shared_ptr<FieldSaver> initSaver(const Config& cfg) {
+    std::shared_ptr<FieldSaver> saver;
+    if (cfg.saver_name == "Sync") {
+        saver = std::shared_ptr<FieldSaver>(
+                new SyncFieldSaver(kHistoryFilename)
+        );
+    } else if (cfg.saver_name == "Async") {
+        throw std::runtime_error("not implemented");
+    } else if (cfg.saver_name == "-") {
+        saver = std::shared_ptr<FieldSaver>(
+                new MockFieldSaver()
+        );
+    } else {
+        throw std::runtime_error("Unknown coagulation kernel");
+    }
+
+    return saver;
+}
+
 std::shared_ptr<coagulation::Coagulator1D> chooseCoagulator(const Config& cfg, const std::vector<double>& volumes) {
     std::shared_ptr<coagulation::Kernel> kernel;
     if (cfg.coagulation_kernel_name == "Identity") {
         kernel = std::shared_ptr<coagulation::Kernel>(
                 new coagulation::IdentityKernel()
         );
-    } else if (cfg.base_coagulator_name == "Addition") {
+    } else if (cfg.coagulation_kernel_name == "Addition") {
         kernel = std::shared_ptr<coagulation::Kernel>(
                 new coagulation::AdditionKernel()
         );
@@ -85,18 +106,20 @@ int main() {
     Config cfg{
             .field_size = 1.0,
             .field_cells_size = 200,
-            .particles_sizes_num = 200,
+            .particles_sizes_num = 500,
             .min_particle_size = 0.1,
             .max_particle_size = 1.0,
 
             .total_time = 20.0,
-            .time_steps = 500,
+            .time_steps = 200,
 
             .advection_coef = 0.1,
 
+            .saver_name = "-", // "Sync", "Async", "-"
+
             .advector_name = "CentralDifference",
-            .coagulation_kernel_name = "Identity", // "Identity", "Addition"
-            .base_coagulator_name = "Fast", // "PredictorCorrector", "Fast"
+            .coagulation_kernel_name = "Addition", // "Identity", "Addition"
+            .base_coagulator_name = "PredictorCorrector", // "PredictorCorrector", "Fast"
             .coagulator_name = "NaiveParallel",  // "Sequential", "NaiveParallel", "ParallelPool"
             .batch_size = 1,
     };
@@ -106,7 +129,7 @@ int main() {
     }
 
     // 2
-    FieldSaver saver(kHistoryFilename);
+    auto saver = initSaver(cfg);
 
     // 3
     auto field1 = init_field_1d(
@@ -136,7 +159,7 @@ int main() {
     run(
             cfg,
             field, field_buff,
-            saver,
+            *saver,
             *advector,
             *coagulator
     );
@@ -150,6 +173,8 @@ void run(
         advection::Advector& advector,
         coagulation::Coagulator1D& coagulator
 ) {
+    auto begin = std::chrono::steady_clock::now();
+
     std::cout << progress(0, cfg.time_steps) << '\r';
     std::cout.flush();
 
@@ -172,4 +197,7 @@ void run(
         std::cout << progress(t + 1, cfg.time_steps) << '\r';
         std::cout.flush();
     }
+
+    auto end = std::chrono::steady_clock::now();
+    std::cout << '\n' << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1e6 << "s\n";
 }

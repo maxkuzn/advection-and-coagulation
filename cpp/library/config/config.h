@@ -16,6 +16,8 @@ struct Config {
 
     double advection_coef;
 
+    std::string saver_name;
+
     std::string advector_name;
 
     std::string coagulation_kernel_name;
@@ -50,6 +52,10 @@ struct Config {
         }
 
         if (time_steps <= 0) {
+            return false;
+        }
+
+        if (saver_name.empty()) {
             return false;
         }
 
